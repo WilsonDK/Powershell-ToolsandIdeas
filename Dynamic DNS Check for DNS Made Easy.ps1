@@ -1,11 +1,8 @@
 #Dynamic DNS Check for DNS Made Easy
 
-#Checklist
-#Comment out Script
 
 #Improvements
 #Log File Size Check = Length or line check followed by deleting or a file size check followed by deleting
-#Add more detailed error handling
 #Add more detailed logs for troubleshooting (might not be worth it)
 
 #Check if Log File Exist and create if it doesn't and Add Start time for script
@@ -18,6 +15,7 @@ else {
     New-item -path $PSScriptRoot -name "log.log" -ItemType "file" -Value "$date - Starting Script"
 }
 
+#A1:Check for Existance of Parameters.CSV
 if (Test-Path -Path $PSScriptRoot\parameters.csv) {
     add-content -path $PSScriptRoot\log.log -Value "Parameter File does exist. Pulling Data..."
     $parameters = import-csv -path $PSScriptRoot\parameters.csv
@@ -30,9 +28,11 @@ if (Test-Path -Path $PSScriptRoot\parameters.csv) {
         Exit
     }
     add-content -path $PSScriptRoot\log.log -Value "Checking if IP Changed."
+    #B1: Check for IP Change
     if ($url -eq $parameters.ip) {
         add-content -path $PSScriptRoot\log.log -Value "IP has not changed. Ending Script..."
     }
+    #B2: Check for IP Change
     else {
         add-content -path $PSScriptRoot\log.log -Value "IP has changed. Updating Record..."
         $parameters.ip = $url
@@ -41,6 +41,7 @@ if (Test-Path -Path $PSScriptRoot\parameters.csv) {
         add-content -path $PSScriptRoot\log.log -Value "DNS Made Easy Results: $result"
     }
 }
+#A2:Check for Existance of Parameters.CSV
 else {
     write-host "file doesn't exist. Please enter Parameter Data..."
     $urihash = [PSCustomObject]@{
