@@ -7,38 +7,44 @@
 
 #Check if Log File Exist and create if it doesn't and Add Start time for script
 [Net.ServicePointManager]::SecurityProtocol = "Tls12, Tls11, Tls"
-$date = Get-Date
-if (Test-Path -path $PSScriptRoot\log.log) {
-    add-content -path $PSScriptRoot\log.log -Value "$date - Starting Script..."
-}
-else {
-    New-item -path $PSScriptRoot -name "log.log" -ItemType "file" -Value "$date - Starting Script"
+
+function Log-Message {
+param (
+    [string]$message
+)
+$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+"$timestamp - $message" | add-content -path $PSScriptRoot\log.log
 }
 
+if (-not (Test-Path -path $PSScriptRoot\log.log)) {
+    New-item -path $PSScriptRoot -name "log.log" -ItemType "file" 
+}
+
+Log-Message "Starting Script..."
 #A1:Check for Existance of Parameters.CSV
 if (Test-Path -Path $PSScriptRoot\parameters.csv) {
-    add-content -path $PSScriptRoot\log.log -Value "Parameter File does exist. Pulling Data..."
+    Log-Message "Parameter File does exist. Pulling Data..."
     $parameters = import-csv -path $PSScriptRoot\parameters.csv
     try {
         $url = (Invoke-WebRequest -UseBasicParsing -uri "http://ifconfig.me/ip").Content
     }
     catch {
-        add-content -path $PSScriptRoot\log.log -Value $error
-        add-content -path $PSScriptRoot\log.log -Value "Stopping Script"
+        Log-Message $error
+        Log-Message "Stopping Script"
         Exit
     }
-    add-content -path $PSScriptRoot\log.log -Value "Checking if IP Changed."
+    Log-Message "Checking if IP Changed."
     #B1: Check for IP Change
     if ($url -eq $parameters.ip) {
-        add-content -path $PSScriptRoot\log.log -Value "IP has not changed. Ending Script..."
+        Log-Message "IP has not changed. Ending Script..."
     }
     #B2: Check for IP Change
     else {
-        add-content -path $PSScriptRoot\log.log -Value "IP has changed. Updating Record..."
+        Log-Message "IP has changed. Updating Record..."
         $parameters.ip = $url
         $parameters | export-csv -NoTypeInformation -path $PSScriptRoot\parameters.csv
         $result = (Invoke-WebRequest -UseBasicParsing -uri "https://cp.dnsmadeeasy.com/servlet/updateip?username=$($parameters.username)&password=$($parameters.password)&id=$($parameters.id)&ip=$($parameters.ip)").content
-        add-content -path $PSScriptRoot\log.log -Value "DNS Made Easy Results: $result"
+        Log-Message "DNS Made Easy Results: $result"
     }
 }
 #A2:Check for Existance of Parameters.CSV
@@ -52,8 +58,8 @@ else {
     }
     $urihash | export-csv -NoTypeInformation -path $PSScriptRoot\parameters.csv
     write-host $urihash
-    add-content -path $PSScriptRoot\log.log -Value "Updating IP. Ending Script..."
+    Log-Message "Updating IP. Ending Script..."
     $result = (Invoke-WebRequest -UseBasicParsing -uri "https://cp.dnsmadeeasy.com/servlet/updateip?username=$($parameters.username)&password=$($parameters.password)&id=$($parameters.id)&ip=$($parameters.ip)").content
-    add-content -path $PSScriptRoot\log.log -Value "DNS Made Easy Results: $result"
+    Log-Message "DNS Made Easy Results: $result"
 }
 
