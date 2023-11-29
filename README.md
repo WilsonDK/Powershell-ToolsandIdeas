@@ -1,2 +1,2 @@
 # Powershell-ToolsandIdeas
-Hub for any ideas and Tools developed or explored why learning powershell
+Hub for any ideas and Tools developed or explored while learning powershell
